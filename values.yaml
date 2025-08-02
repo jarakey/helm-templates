@@ -1,0 +1,162 @@
+# Default values for helm-templates
+# This is a YAML-formatted file.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  irsa:
+    enabled: false
+    roleArn: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+containerSecurityContext: {}
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  externalDNS:
+    enabled: false
+    hostname: ""
+    ttl: "300"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+# Doppler Integration
+doppler:
+  enabled: false
+  project: ""
+  config: ""
+  refreshInterval: "1h"
+  secretStore: "doppler-secret-store"
+  secrets: []
+    # - key: "DATABASE_URL"
+    #   secret: "database_url"
+    # - key: "API_KEY"
+    #   secret: "api_key"
+
+# Environment variables
+env: {}
+  # DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+  # LOG_LEVEL: "info"
+
+# Health check configuration
+healthCheck:
+  path: "/health"
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+# CronJob Configuration
+cronjob:
+  enabled: false
+  schedule: "0 0 * * *"  # Daily at midnight
+  concurrencyPolicy: "Forbid"
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  backoffLimit: 6
+  activeDeadlineSeconds: 3600
+  restartPolicy: "OnFailure"
+  env: {}
+    # CRON_ENV: "production"
+  command: []
+  args: []
+  volumeMounts: []
+  volumes: []
+  podAnnotations: {}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Job Configuration
+job:
+  enabled: false
+  parallelism: 1
+  completions: 1
+  backoffLimit: 6
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 300
+  restartPolicy: "OnFailure"
+  env: {}
+    # JOB_ENV: "production"
+  command: []
+  args: []
+  volumeMounts: []
+  volumes: []
+  podAnnotations: {}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# ConfigMap Configuration
+configmap:
+  enabled: false
+  data: {}
+    # APP_CONFIG: "production"
+    # LOG_LEVEL: "info"
+  binaryData: {}
+  files: {}
+    # config.yaml: |
+    #   database:
+    #     host: localhost
+    #     port: 5432
+
+# Global settings
+global:
+  ingressClass: "nginx" 

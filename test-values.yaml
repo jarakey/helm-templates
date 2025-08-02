@@ -1,0 +1,167 @@
+# Test values for helm-templates chart
+# This file is used for testing all components
+
+replicaCount: 2
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: "1.25"
+
+nameOverride: "test-app"
+fullnameOverride: "test-app"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  irsa:
+    enabled: false
+    roleArn: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+containerSecurityContext: {}
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: test-app.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  externalDNS:
+    enabled: true
+    hostname: "test-app.local"
+    ttl: "300"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+pdb:
+  enabled: true
+  minAvailable: 1
+  maxUnavailable: 1
+
+# Doppler Integration
+doppler:
+  enabled: true
+  project: "test-app"
+  config: "test"
+  refreshInterval: "1h"
+  secretStore: "doppler-secret-store"
+  secrets:
+    - key: "DATABASE_URL"
+      secret: "database_url"
+    - key: "API_KEY"
+      secret: "api_key"
+
+# Environment variables
+env:
+  NODE_ENV: "test"
+  LOG_LEVEL: "debug"
+
+# Health check configuration
+healthCheck:
+  path: "/health"
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+# CronJob Configuration
+cronjob:
+  enabled: true
+  schedule: "*/5 * * * *"  # Every 5 minutes for testing
+  concurrencyPolicy: "Forbid"
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  backoffLimit: 6
+  activeDeadlineSeconds: 3600
+  restartPolicy: "OnFailure"
+  env:
+    CRON_ENV: "test"
+  command: ["echo"]
+  args: ["Hello from cronjob"]
+  volumeMounts: []
+  volumes: []
+  podAnnotations: {}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Job Configuration
+job:
+  enabled: true
+  parallelism: 1
+  completions: 1
+  backoffLimit: 6
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 300
+  restartPolicy: "OnFailure"
+  env:
+    JOB_ENV: "test"
+  command: ["echo"]
+  args: ["Hello from job"]
+  volumeMounts: []
+  volumes: []
+  podAnnotations: {}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# ConfigMap Configuration
+configmap:
+  enabled: true
+  data:
+    APP_CONFIG: "test"
+    LOG_LEVEL: "debug"
+    DATABASE_HOST: "localhost"
+    DATABASE_PORT: "5432"
+  binaryData: {}
+  files:
+    config.yaml: |
+      database:
+        host: localhost
+        port: 5432
+        name: testdb
+      logging:
+        level: debug
+        format: json
+
+# Global settings
+global:
+  ingressClass: "nginx" 

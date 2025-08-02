@@ -1,0 +1,25 @@
+{{- if .Values.configmap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helm-templates.fullname" . }}
+  labels:
+    {{- include "helm-templates.labels" . | nindent 4 }}
+data:
+  {{- if .Values.configmap.data }}
+  {{- range $key, $value := .Values.configmap.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.configmap.binaryData }}
+  {{- range $key, $value := .Values.configmap.binaryData }}
+  {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.configmap.files }}
+  {{- range $filename, $content := .Values.configmap.files }}
+  {{ $filename }}: |
+    {{- $content | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }} 

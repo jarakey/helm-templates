@@ -1,0 +1,21 @@
+apiVersion: v2
+name: helm-templates
+description: A Helm chart for Kubernetes applications with Doppler integration and cost optimizations
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - kubernetes
+  - helm
+  - doppler
+  - cost-optimization
+home: https://github.com/jarakey/helm-templates
+sources:
+  - https://github.com/jarakey/helm-templates
+maintainers:
+  - name: JARAKEY
+    email: tolu@jarakey.com
+icon: https://helm.sh/img/helm.svg
+annotations:
+  category: Infrastructure
+  licenses: MIT 

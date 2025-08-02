@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "helm-templates.fullname" . }}-test-deployment"
+  labels:
+    {{- include "helm-templates.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: test
+      image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      command: ['sh', '-c']
+      args:
+        - |
+          # Test if the application is responding
+          if wget -q --spider http://localhost:{{ .Values.service.port }}/health; then
+            echo "Health check passed"
+            exit 0
+          else
+            echo "Health check failed"
+            exit 1
+          fi
+      ports:
+        - containerPort: {{ .Values.service.port }}
+  restartPolicy: Never 

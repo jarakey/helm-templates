@@ -1,0 +1,95 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "helm-templates.fullname" . }}
+  labels:
+    {{- include "helm-templates.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  {{- if .Values.cronjob.concurrencyPolicy }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  {{- end }}
+  {{- if .Values.cronjob.suspend }}
+  suspend: {{ .Values.cronjob.suspend }}
+  {{- end }}
+  {{- if .Values.cronjob.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  {{- end }}
+  {{- if .Values.cronjob.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      {{- if .Values.cronjob.backoffLimit }}
+      backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      {{- end }}
+      {{- if .Values.cronjob.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ .Values.cronjob.activeDeadlineSeconds }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "helm-templates.selectorLabels" . | nindent 12 }}
+          {{- with .Values.cronjob.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          serviceAccountName: {{ include "helm-templates.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 10 }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy | default "OnFailure" }}
+          containers:
+            - name: {{ .Chart.Name }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- if .Values.doppler.enabled }}
+              envFrom:
+                - secretRef:
+                    name: {{ include "helm-templates.fullname" . }}-doppler
+              {{- end }}
+              {{- if .Values.cronjob.env }}
+              env:
+                {{- range $key, $value := .Values.cronjob.env }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+              {{- end }}
+              {{- if .Values.cronjob.command }}
+              command:
+                {{- toYaml .Values.cronjob.command | nindent 16 }}
+              {{- end }}
+              {{- if .Values.cronjob.args }}
+              args:
+                {{- toYaml .Values.cronjob.args | nindent 16 }}
+              {{- end }}
+              {{- if .Values.cronjob.volumeMounts }}
+              volumeMounts:
+                {{- toYaml .Values.cronjob.volumeMounts | nindent 16 }}
+              {{- end }}
+              resources:
+                {{- toYaml .Values.cronjob.resources | nindent 16 }}
+          {{- if .Values.cronjob.volumes }}
+          volumes:
+            {{- toYaml .Values.cronjob.volumes | nindent 10 }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+{{- end }} 
