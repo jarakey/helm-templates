@@ -1,0 +1,118 @@
+{{- $root := . }}
+{{- $jobs := list}}
+{{- if .Values.job | kindIs "map" }}
+  {{- $jobs = append $jobs .Values.job }}
+{{- else if .Values.job | kindIs "slice" }}
+  {{- $jobs = .Values.job }}
+{{- end }}
+{{- range $jobs }}
+{{- if .enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .name | required "a job must have a name" }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+    {{- range $key, $val := .labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- if .annotations }}
+  annotations:
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- end }}
+spec:
+  completions: {{ .completions | default 1 }}
+  {{- with .ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
+  {{- with .activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ . }}
+  {{- end }}
+  backoffLimit: {{ .backoffLimit | default 6 }}
+  parallelism: {{ .parallelism | default 1 }}
+  completionMode: {{ .completionMode | default "NonIndexed" }}
+  suspend: {{ .suspend | default false }}
+  template:
+    metadata:
+      labels:
+        {{- include "selector.labels" $root | nindent 8 }}
+        {{- range $key, $value := .podLabels }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+      {{- if .podAnnotations }}
+      annotations:
+        {{- range $key, $value := .podAnnotations }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- if $root.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml $root.Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .serviceAccountName }}
+      serviceAccountName: {{ .serviceAccountName }}
+      {{- else if $root.Values.security.serviceAccount.create }}
+      serviceAccountName: {{ include "common.serviceAccountName" $root }}
+      {{- end }}
+      containers:
+        - name: {{ .name }}
+          image: "{{ .image.repository }}:{{ .image.tag }}"
+          imagePullPolicy: {{ .image.pullPolicy | default "IfNotPresent" }}
+          {{- with .command }}
+          command:
+            {{- toYaml . | nindent 14 }}
+          {{- end }}
+          {{- with .args }}
+          args:
+            {{- toYaml . | nindent 14 }}
+          {{- end }}
+          {{- with .env }}
+          env:
+            {{- toYaml . | nindent 14 }}
+          {{- end }}
+          {{- with .envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      restartPolicy: {{ .restartPolicy | default "Never" }}
+      {{- if .terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- with .affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .podSecurityContext }}
+      podSecurityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- end }}
+{{- end }}

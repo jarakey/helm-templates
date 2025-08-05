@@ -1,0 +1,31 @@
+{{- $root := . }}
+{{- $persistentVolumeClaims := list }}
+{{- if .Values.persistentVolumeClaim | kindIs "map" }}
+  {{- $persistentVolumeClaims = append $persistentVolumeClaims .Values.persistentVolumeClaim }}
+{{- else }}
+  {{- $persistentVolumeClaims = .Values.persistentVolumeClaim }}
+{{- end }}
+{{- range $persistentVolumeClaims }}
+{{- if .enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .name | required "a persistent volume claim must have a name" }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  {{- if .storageClassName }}
+  storageClassName: {{ .storageClassName }}
+  {{- else }}
+  storageClassName: "efs-generic-storage-class"
+  {{- end }}
+  accessModes:
+  {{- if .accessModes }}
+  {{- toYaml .accessModes | nindent 2 }}
+  {{- else }}
+  - ReadWriteOnce
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .size | required "a persistent volume claim must have a size" }}
+{{- end }}
+{{- end }}

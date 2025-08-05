@@ -1,0 +1,122 @@
+{{- $root := . }}
+{{- $cronjobs := list }}
+{{- if .Values.cronjob | kindIs "map" }}
+  {{- $cronjobs = append $cronjobs .Values.cronjob }}
+{{- else if .Values.cronjob | kindIs "slice" }}
+  {{- $cronjobs = .Values.cronjob }}
+{{- end }}
+{{- range $cronjobs }}
+{{- if .enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .name | required "a cronjob must have a name" }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+    {{- range $key, $val := .labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- if .annotations }}
+  annotations:
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- end }}
+spec:
+  concurrencyPolicy: {{ .concurrencyPolicy | default "Forbid" }}
+  schedule: {{ .schedule | required "a cronjob must have a schedule" | quote }}
+  suspend: {{ .suspend | default "false" }}
+  successfulJobsHistoryLimit: {{ .successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ .failedJobsHistoryLimit | default 1 }}
+  {{- with .startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "selector.labels" $root | nindent 12 }}
+            {{- range $key, $value := .podLabels }}
+            {{ $key }}: {{ $value }}
+            {{- end }}
+          {{- if .podAnnotations }}
+          annotations:
+            {{- range $key, $value := .podAnnotations }}
+            {{ $key }}: {{ $value }}
+            {{- end }}
+          {{- end }}
+        spec:
+          {{- if $root.Values.global.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml $root.Values.global.imagePullSecrets | nindent 12 }}
+          {{- end }}
+          {{- if .serviceAccountName }}
+          serviceAccountName: {{ .serviceAccountName }}
+          {{- else if $root.Values.security.serviceAccount.create }}
+          serviceAccountName: {{ include "common.serviceAccountName" $root }}
+          {{- end }}
+          containers:
+            - name: {{ .name }}
+              {{- if .image }}
+              image: "{{ .image.repository }}:{{ .image.tag }}"
+              imagePullPolicy: {{ .image.pullPolicy | default "IfNotPresent" }}
+              {{- else if $root.Values.global.image }}
+              image: "{{ $root.Values.global.image.repository }}:{{ $root.Values.global.image.tag }}"
+              imagePullPolicy: {{ $root.Values.global.image.pullPolicy | default "IfNotPresent" }}
+              {{- end }}
+              {{- with .command }}
+              command:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .args }}
+              args:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .env }}
+              env:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .envFrom }}
+              envFrom:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .volumeMounts }}
+              volumeMounts:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          restartPolicy: {{ .restartPolicy | default "Never" }}
+          {{- if .terminationGracePeriodSeconds }}
+          terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds }}
+          {{- end }}
+          {{- with .affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .podSecurityContext }}
+          podSecurityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+---
+{{- end }}
+{{- end }}

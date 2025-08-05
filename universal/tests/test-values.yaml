@@ -1,0 +1,395 @@
+# Test values for Universal Helm Chart
+# This file demonstrates the universal chart capabilities
+
+# Global configuration
+global:
+  labels:
+    environment: "test"
+    team: "platform"
+  imagePullSecrets:
+    - name: "test-registry-secret"
+  image:
+    repository: "test-registry/default"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+# Multiple deployments example
+deployments:
+  - name: "web-server"
+    enabled: true
+    image:
+      repository: "test-registry/web-server"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicas: 2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    ports:
+      - name: http
+        containerPort: 8080
+        protocol: TCP
+    healthCheck:
+      enabled: true
+      path: "/health"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    env:
+      - name: NODE_ENV
+        value: "test"
+      - name: LOG_LEVEL
+        value: "debug"
+    envFrom:
+      - configMapRef:
+          name: "web-config"
+      - secretRef:
+          name: "web-secrets"
+    volumes:
+      - name: logs
+        emptyDir: {}
+    volumeMounts:
+      - name: logs
+        mountPath: "/app/logs"
+    annotations:
+      test.annotation: "true"
+    podAnnotations:
+      test.pod.annotation: "true"
+    service:
+      enabled: true
+      type: ClusterIP
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+
+  - name: "api-server"
+    enabled: true
+    image:
+      repository: "test-registry/api-server"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+    ports:
+      - name: http
+        containerPort: 3000
+        protocol: TCP
+      - name: grpc
+        containerPort: 50051
+        protocol: TCP
+    healthCheck:
+      enabled: true
+      path: "/health"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    env:
+      - name: NODE_ENV
+        value: "test"
+      - name: API_VERSION
+        value: "v1"
+    envFrom:
+      - configMapRef:
+          name: "api-config"
+      - secretRef:
+          name: "api-secrets"
+    service:
+      enabled: true
+      type: ClusterIP
+      ports:
+        - name: http
+          port: 80
+          targetPort: 3000
+        - name: grpc
+          port: 50051
+          targetPort: 50051
+
+  - name: "worker"
+    enabled: true
+    image:
+      repository: "test-registry/worker"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env:
+      - name: WORKER_MODE
+        value: "true"
+      - name: QUEUE_NAME
+        value: "test-queue"
+    service:
+      enabled: true
+      type: ClusterIP
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+
+# Feature flags - all disabled for test environment
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+
+# Legacy PodDisruptionBudget configuration for backward compatibility
+PodDisruptionBudget:
+  - name: "main-pdb"
+    enabled: false
+    minAvailable: 1
+    selectorLabels: {}
+    annotations: {}
+
+ingress:
+  - name: "main-ingress"
+    enabled: true
+    className: "nginx"
+    serviceName: "web-server-service"
+    servicePort: 80
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: "test.example.com"
+        serviceName: "web-server-service"
+        servicePort: 80
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: "web-server-service"
+            servicePort: 80
+          - path: /api
+            pathType: Prefix
+            serviceName: "api-server-service"
+            servicePort: 80
+    tls: []
+
+service:
+  - name: "web-server-service"
+    enabled: true
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 80
+        targetPort: 8080
+        protocol: TCP
+    annotations: {}
+    additionalLabels: {}
+    sessionAffinity: ""
+  - name: "api-server-service"
+    enabled: true
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 80
+        targetPort: 3000
+        protocol: TCP
+      - name: grpc
+        port: 50051
+        targetPort: 50051
+        protocol: TCP
+    annotations: {}
+    additionalLabels: {}
+    sessionAffinity: ""
+
+# Security features disabled for test
+security:
+  enabled: false
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  serviceAccount:
+    create: false
+    name: ""
+    annotations: {}
+    automountServiceAccountToken: false
+
+# Legacy serviceAccount configuration for backward compatibility
+serviceAccount:
+  - name: "main-service-account"
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/ECR-Pull-Role"
+    automountServiceAccountToken: true
+
+# Monitoring disabled for test
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+    scrape: false
+    path: "/metrics"
+    port: 8080
+  grafana:
+    enabled: false
+    dashboard: false
+
+# Additional resources
+configMap:
+  enabled: true
+  name: "app-config"
+  data:
+    app.name: "test-app"
+    app.version: "1.0.0"
+    database.url: "postgresql://localhost:5432/testdb"
+  annotations: {}
+  labels: {}
+
+secret:
+  enabled: true
+  name: "app-secrets"
+  type: Opaque
+  data:
+    database.password: "dGVzdC1wYXNzd29yZA=="  # base64 encoded
+    api.key: "dGVzdC1hcGkta2V5"  # base64 encoded
+  annotations: {}
+  labels: {}
+
+pvc:
+  enabled: false
+  name: ""
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1Gi
+
+# Job example
+job:
+  - name: "migration-job"
+    enabled: true
+    image:
+      repository: "test-registry/migrator"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    command: ["npm"]
+    args: ["run", "migrate"]
+    env:
+      - name: NODE_ENV
+        value: "test"
+    envFrom:
+      - secretRef:
+          name: "app-secrets"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    backoffLimit: 3
+    activeDeadlineSeconds: 300
+    ttlSecondsAfterFinished: 3600
+    restartPolicy: "Never"
+    terminationGracePeriodSeconds: 60
+
+# CronJob example
+cronjob:
+  - name: "cleanup-job"
+    enabled: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 1
+    image:
+      repository: "test-registry/cleanup"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    command: ["npm"]
+    args: ["run", "cleanup"]
+    env:
+      - name: NODE_ENV
+        value: "test"
+    envFrom:
+      - secretRef:
+          name: "app-secrets"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    backoffLimit: 3
+    activeDeadlineSeconds: 600
+    ttlSecondsAfterFinished: 3600
+    restartPolicy: "Never"
+    terminationGracePeriodSeconds: 60
+
+# StatefulSet example
+statefulSets:
+  - name: "database"
+    enabled: true
+    replicas: 1
+    serviceName: "database-service"
+    podManagementPolicy: OrderedReady
+    image:
+      repository: "test-registry/postgres"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    ports:
+      - name: postgresql
+        containerPort: 5432
+        protocol: TCP
+    env:
+      - name: POSTGRES_DB
+        value: "testdb"
+      - name: POSTGRES_USER
+        value: "testuser"
+    envFrom:
+      - secretRef:
+          name: "database-secrets"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    volumes:
+      - name: postgres-data
+        emptyDir: {}
+    volumeMounts:
+      - name: postgres-data
+        mountPath: "/var/lib/postgresql/data"
+    healthCheck:
+      enabled: true
+      path: "/health"
+      port: 5432
+    affinity: {}
+    tolerations: []
+    nodeSelector: {}
+    securityContext: {}
+    podSecurityContext: {}
+    annotations: {}
+    podAnnotations: {}
+    labels: {}
+    podLabels: {}
+    terminationGracePeriodSeconds: 60
+    volumeClaimTemplates:
+      - metadata:
+          name: postgres-data
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi 

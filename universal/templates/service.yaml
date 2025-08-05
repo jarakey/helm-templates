@@ -1,0 +1,43 @@
+{{- $root := . }}
+{{- $services := list }}
+{{- if .Values.service | kindIs "map" }}
+  {{- $services = append $services .Values.service }}
+{{- else }}
+  {{- $services = .Values.service }}
+{{- end }}
+{{- range $services }}
+{{- if .enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name | required "A service must have a name" }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+    {{- range $key, $value := .additionalLabels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- if .annotations }}
+  annotations:
+    {{- range $key, $value := .annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .type }}
+  {{- if eq .type "ExternalName" }}
+  externalName: {{ .externalName }}
+  {{- else }}
+  {{- with .ports }}
+  ports:
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  selector:
+    {{- include "selector.labels" $root | nindent 4 }}
+  {{- end }}
+  {{- with .sessionAffinity }}
+  sessionAffinity: {{ . }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}
+

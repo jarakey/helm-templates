@@ -1,0 +1,45 @@
+{{- $root := . }}
+{{- $pdbs := list }}
+{{- if .Values.PodDisruptionBudget | kindIs "map" }}
+  {{- $pdbs = append $pdbs .Values.PodDisruptionBudget }}
+{{- else if .Values.PodDisruptionBudget | kindIs "slice" }}
+  {{- $pdbs = .Values.PodDisruptionBudget }}
+{{- else if .Values.pdb | kindIs "map" }}
+  {{- $pdbs = append $pdbs .Values.pdb }}
+{{- else if .Values.pdb | kindIs "slice" }}
+  {{- $pdbs = .Values.pdb }}
+{{- end }}
+{{- range $pdbs }}
+{{- if .enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "chart.name" $root }}{{ if .name }}-{{ .name }}{{ end }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+    {{- range $key, $val := .labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- if .annotations }}
+  annotations:
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if .minAvailable }}
+  minAvailable: {{ .minAvailable }}
+  {{- else if .maxUnavailable }}
+  maxUnavailable: {{ .maxUnavailable }}
+  {{- else }}
+  minAvailable: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "selector.labels" $root | nindent 6 }}
+      {{- if .selectorLabels }}
+      {{- toYaml .selectorLabels | nindent 6 }}
+      {{- end }}
+---
+{{- end }}
+{{- end }}

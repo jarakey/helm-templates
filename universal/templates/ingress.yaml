@@ -1,0 +1,85 @@
+{{- $root := . }}
+{{- $ingresses := list }}
+{{- if .Values.ingress | kindIs "map" }}
+  {{- $ingresses = append $ingresses .Values.ingress }}
+{{- else }}
+  {{- $ingresses = .Values.ingress }}
+{{- end }}
+{{- range $ingresses }}
+{{- if .enabled }}
+apiVersion: networking.k8s.io/v1beta2
+kind: Ingress
+metadata:
+  name: {{ .name | required "An ingress must have a name" }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
+    {{- with .annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/enable-owasp-core-rules: 'true'
+spec:
+  tls:
+  {{- range .hosts }}
+  - hosts:
+    {{- if . | kindIs "map" }}
+      - {{ .host | default .name }}
+    secretName: "{{ .host | default .name }}"
+    {{- else }}
+      - {{ . }}
+    secretName: "{{ . }}"
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- $serviceName := .serviceName }}
+    {{- $pathType := .pathType | default "Prefix" }}
+    {{- $servicePort := .servicePort | default 80 }}
+    {{- $paths := .paths }}
+    {{- range .hosts }}
+    {{- if . | kindIs "map" }}
+    - host: {{ .host | default .name }}
+      http:
+        paths:
+          {{- $serviceName = .serviceName }}
+          {{- $pathType = .pathType | default "Prefix" }}
+          {{- $servicePort = .servicePort | default 80 }}
+          {{- range .paths }}
+          {{- if . | kindIs "map" }}
+          - path: {{ .path | quote }}
+            pathType: {{ .pathType | default $pathType  }}
+            backend:
+              service:
+                name: {{ .serviceName | default $serviceName  }}
+                port:
+                  number: {{ .servicePort | default $servicePort }}
+          {{- else }}
+          - path: {{ . | quote }}
+            pathType: {{ $pathType  }}
+            backend:
+              service:
+                name: {{ $serviceName  }}
+                port:
+                  number: {{ $servicePort }}
+          {{- end }}
+          {{- end }}
+    {{- else }}
+    - host: {{ . }}
+      http:
+        paths:
+        {{- range $paths }}
+          - path: {{ . | quote }}
+            pathType: {{ $pathType  }}
+            backend:
+              service:
+                name: {{ $serviceName  }}
+                port:
+                  number: {{ $servicePort }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+
+---
+{{- end }}
+{{- end }}

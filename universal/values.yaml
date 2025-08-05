@@ -1,0 +1,225 @@
+# Universal Helm Chart - Default Values
+# All features are disabled by default and controlled via feature flags
+
+# Global configuration
+global:
+  labels: {}
+  imagePullSecrets: []
+
+# Multiple deployments support
+deployments: []
+# Example deployment configuration:
+# deployments:
+#   - name: "main-app"
+#     enabled: true
+#     image:
+#       repository: "your-ecr-repo/your-app"
+#       tag: "latest"
+#       pullPolicy: IfNotPresent
+#     replicas: 1
+#     resources:
+#       limits:
+#         cpu: 500m
+#         memory: 512Mi
+#       requests:
+#         cpu: 100m
+#         memory: 128Mi
+#     ports:
+#       - name: http
+#         containerPort: 8080
+#         protocol: TCP
+#     healthCheck:
+#       enabled: true
+#       path: "/health"
+#       initialDelaySeconds: 30
+#       periodSeconds: 10
+#     env: []
+#     envFrom: []
+#     volumes: []
+#     volumeMounts: []
+#     command: []
+#     args: []
+#     initContainers: []
+#     sidecars: []
+#     affinity: {}
+#     tolerations: []
+#     nodeSelector: {}
+#     securityContext: {}
+#     podSecurityContext: {}
+#     annotations: {}
+#     podAnnotations: {}
+#     labels: {}
+#     podLabels: {}
+#     strategy: {}
+#     terminationGracePeriodSeconds: 60
+
+# Feature flags for all capabilities
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior: {}
+
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: 1
+  selectorLabels: {}
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts: []
+  # Example:
+  # hosts:
+  #   - host: "your-app.staging.example.com"
+  #     paths:
+  #       - path: /
+  #         pathType: Prefix
+  tls: []
+  extraPaths: []
+
+service:
+  enabled: false
+  type: ClusterIP
+  ports: []
+  # Example:
+  # ports:
+  #   - name: http
+  #     port: 80
+  #     targetPort: 8080
+  #     protocol: TCP
+  annotations: {}
+  labels: {}
+  sessionAffinity: ""
+  sessionAffinityConfig: {}
+
+doppler:
+  enabled: false
+  project: ""
+  config: ""
+  secretStoreRef:
+    kind: SecretStore
+    name: doppler-auth-api
+
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+    scrape: false
+    path: "/metrics"
+    port: 8080
+  grafana:
+    enabled: false
+    dashboard: false
+
+security:
+  enabled: false
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  serviceAccount:
+    create: false
+    name: ""
+    annotations: {}
+    automountServiceAccountToken: false
+
+# Additional resources
+configMap:
+  enabled: false
+  name: ""
+  data: {}
+  annotations: {}
+  labels: {}
+
+secret:
+  enabled: false
+  name: ""
+  type: Opaque
+  data: {}
+  annotations: {}
+  labels: {}
+
+pvc:
+  enabled: false
+  name: ""
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1Gi
+
+# Job and CronJob support
+job:
+  enabled: false
+  name: ""
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  command: []
+  args: []
+  env: []
+  envFrom: []
+  resources: {}
+  backoffLimit: 4
+  activeDeadlineSeconds: null
+  ttlSecondsAfterFinished: null
+
+cronjob:
+  enabled: false
+  name: ""
+  schedule: ""
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  command: []
+  args: []
+  env: []
+  envFrom: []
+  resources: {}
+  backoffLimit: 4
+  activeDeadlineSeconds: null
+  ttlSecondsAfterFinished: null
+
+# StatefulSet support
+statefulset:
+  enabled: false
+  name: ""
+  replicas: 1
+  serviceName: ""
+  podManagementPolicy: OrderedReady
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  ports: []
+  env: []
+  envFrom: []
+  resources: {}
+  volumes: []
+  volumeMounts: []
+  volumeClaimTemplates: []
+  command: []
+  args: []
+  healthCheck:
+    enabled: false
+    path: "/health"
+    port: 8080
+  affinity: {}
+  tolerations: []
+  nodeSelector: {}
+  securityContext: {}
+  podSecurityContext: {}
+  annotations: {}
+  podAnnotations: {}
+  labels: {}
+  podLabels: {}
+  terminationGracePeriodSeconds: 60

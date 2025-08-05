@@ -1,0 +1,153 @@
+{{- $root := . }}
+{{- $statefulSets := list }}
+{{- if .Values.statefulSet | kindIs "map" }}
+  {{- $statefulSets = append $statefulSets .Values.statefulSet }}
+{{- else if .Values.statefulSet | kindIs "slice" }}
+  {{- $statefulSets = .Values.statefulSet }}
+{{- else if .Values.statefulSets | kindIs "slice" }}
+  {{- $statefulSets = .Values.statefulSets }}
+{{- else if .Values.statefulset | kindIs "map" }}
+  {{- $statefulSets = append $statefulSets .Values.statefulset }}
+{{- else if .Values.statefulset | kindIs "slice" }}
+  {{- $statefulSets = .Values.statefulset }}
+{{- end }}
+{{- range $statefulSets }}
+{{- if .enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+    {{- range $key, $val := .labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- if .annotations }}
+  annotations:
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- end }}
+spec:
+  serviceName: {{ .serviceName | default .name }}
+  podManagementPolicy: {{ .podManagementPolicy | default "OrderedReady" }}
+  replicas: {{ .replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "selector.labels" $root | nindent 6 }}
+      app.kubernetes.io/component: {{ .name }}
+  template:
+    metadata:
+      labels:
+        {{- include "selector.labels" $root | nindent 8 }}
+        app.kubernetes.io/component: {{ .name }}
+        {{- range $key, $value := .podLabels }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+      {{- if .podAnnotations }}
+      annotations:
+        {{- range $key, $value := .podAnnotations }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- if $root.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml $root.Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .serviceAccountName }}
+      serviceAccountName: {{ .serviceAccountName }}
+      {{- else if $root.Values.security.serviceAccount.create }}
+      serviceAccountName: {{ include "common.serviceAccountName" $root }}
+      {{- end }}
+      containers:
+        - name: {{ .name }}
+          {{- if .image }}
+          image: "{{ .image.repository }}:{{ .image.tag }}"
+          imagePullPolicy: {{ .image.pullPolicy | default "IfNotPresent" }}
+          {{- else if $root.Values.global.image }}
+          image: "{{ $root.Values.global.image.repository }}:{{ $root.Values.global.image.tag }}"
+          imagePullPolicy: {{ $root.Values.global.image.pullPolicy | default "IfNotPresent" }}
+          {{- end }}
+          {{- with .ports }}
+          ports:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .command }}
+          command:
+            {{- range $value := .command }}
+            - {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .args }}
+          args:
+            {{- range $value := .args }}
+            - {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with .env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .resources }}
+          resources:
+             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .healthCheck }}
+          {{- if .healthCheck.enabled | default false }}
+          livenessProbe:
+            httpGet:
+              path: {{ .healthCheck.path | default "/health" }}
+              port: {{ .healthCheck.port | default (index .ports 0).containerPort | default 8080 }}
+            initialDelaySeconds: {{ .healthCheck.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .healthCheck.periodSeconds | default 10 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .healthCheck.path | default "/health" }}
+              port: {{ .healthCheck.port | default (index .ports 0).containerPort | default 8080 }}
+            initialDelaySeconds: {{ .healthCheck.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .healthCheck.periodSeconds | default 10 }}
+          {{- end }}
+          {{- end }}
+      {{- with .volumes }}
+      volumes:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .podSecurityContext }}
+      podSecurityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds }}
+      {{- end }}
+{{- with .volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+---
+{{- end }}
+{{- end }}

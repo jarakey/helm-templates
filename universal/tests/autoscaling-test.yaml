@@ -1,0 +1,10 @@
+deployments:
+  - name: "autoscaling-test"
+    enabled: true
+    image:
+      repository: "test/autoscaling"
+      tag: "latest"
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
