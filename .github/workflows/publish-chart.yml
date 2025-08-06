@@ -69,17 +69,15 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Create Helm repository index
-        run: |
-          mkdir -p docs
-          cp universal/$CHART_NAME*.tgz docs/
-          helm repo index docs --url https://jarakey.github.io/helm-templates
+
 
       - name: Setup gh-pages branch
         run: |
           git checkout --orphan gh-pages
           git rm -rf .
-          git checkout main -- docs/
+          mkdir -p docs
+          cp universal/$CHART_NAME*.tgz docs/
+          helm repo index docs --url https://jarakey.github.io/helm-templates
           git add docs/
           git commit -m "Publish Helm chart $CHART_NAME ${{ steps.version.outputs.new_version }}"
           git push origin gh-pages --force
