@@ -10,7 +10,7 @@ on:
 
 env:
   CHART_NAME: universal
-  GITHUB_PAGES_BRANCH: gh-pages
+  GITHUB_PAGES_BRANCH: main
   GITHUB_REPO: jarakey/helm-templates
 
 jobs:
