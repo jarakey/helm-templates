@@ -103,16 +103,13 @@ The chart is automatically published when changes are pushed to the `main` branc
 
 ## 📊 Available Services
 
-- **jarakey-frontend**: Main user interface
-- **admin-frontend**: Administrative dashboard
-- **user-service**: User management and authentication
-- **code-service**: Access code generation and management
-- **validation-service**: Code validation and security
-- **admin-service**: Administrative functions
-- **subscription-service**: Subscription and billing management
-- **payment-service**: Payment processing
-- **notification-service**: Real-time notifications
-- **tracing-service**: Distributed tracing and monitoring
+1. **Use Feature Flags**: Enable only the features you need for each environment
+2. **Dockerfile-Driven**: Let your Dockerfiles handle startup commands and entrypoints
+3. **Resource Management**: Always specify resource limits and requests
+4. **Security First**: Enable security features in production environments
+5. **Monitoring**: Enable monitoring features for production workloads
+6. **Environment-Specific Values**: Use separate values files for different environments
+7. **Version Pinning**: Pin chart versions in CI/CD for reproducible deployments
 
 ## 🤝 Contributing
 
@@ -123,4 +120,4 @@ The chart is automatically published when changes are pushed to the `main` branc
 
 ## 📞 Support
 
-For issues or questions, contact: tolu@jarakey.com 
+For issues or questions, contact: t@jarakey.com 

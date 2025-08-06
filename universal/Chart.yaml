@@ -15,7 +15,7 @@ sources:
   - https://github.com/jarakey/helm-templates
 maintainers:
   - name: JARAKEY
-    email: tolu@jarakey.com
+    email: t@jarakey.com
 icon: https://helm.sh/img/helm.svg
 annotations:
   category: Infrastructure
