@@ -103,7 +103,6 @@ spec:
               protocol: {{ .protocol | default "TCP" }}
             {{- end }}
           {{- end }}
-          {{- end }}
           {{- if .healthCheck }}
           {{- if .healthCheck.enabled | default false }}
           livenessProbe:
@@ -118,6 +117,7 @@ spec:
               port: {{ .healthCheck.port | default (index .ports 0).containerPort }}
             initialDelaySeconds: {{ .healthCheck.initialDelaySeconds | default 30 }}
             periodSeconds: {{ .healthCheck.periodSeconds | default 10 }}
+          {{- end }}
           {{- end }}
       {{- with .volumes }}
       volumes:
@@ -149,7 +149,7 @@ spec:
   progressDeadlineSeconds: 300
   revisionHistoryLimit: 0
 ---
-{{- if and .service .service.enabled .service.ports }}
+{{- if and .ports (not (and .service (eq (.service.enabled | toString) "false"))) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -157,18 +157,27 @@ metadata:
   labels:
     {{- include "common.labels" $root | nindent 4 }}
 spec:
-  type: {{ .service.type | default "ClusterIP" }}
+  type: {{ ((.service).type | default "ClusterIP") }}
   selector:
     {{- include "selector.labels" $root | nindent 4 }}
     app.kubernetes.io/component: {{ .name }}
   ports:
+    {{- if ((.service).ports) }}
     {{- range .service.ports }}
     - name: {{ .name }}
       port: {{ .port }}
       targetPort: {{ .targetPort | default .port }}
       protocol: {{ .protocol | default "TCP" }}
     {{- end }}
-  {{- with .service.sessionAffinity }}
+    {{- else }}
+    {{- range .ports }}
+    - name: {{ .name | default "http" }}
+      port: {{ .containerPort }}
+      targetPort: {{ .containerPort }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+    {{- end }}
+  {{- with (((.service).sessionAffinity) | default "") }}
   sessionAffinity: {{ . }}
   {{- end }}
 ---

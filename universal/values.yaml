@@ -33,6 +33,17 @@ deployments: []
 #       path: "/health"
 #       initialDelaySeconds: 30
 #       periodSeconds: 10
+#     # Service is created automatically for deployments with ports
+#     # To disable service creation, set: service.enabled: false
+#     # To customize service, use:
+#     # service:
+#     #   enabled: true
+#     #   type: ClusterIP
+#     #   ports:
+#     #     - name: http
+#     #       port: 80
+#     #       targetPort: 8080
+#     #       protocol: TCP
 #     env: []
 #     envFrom: []
 #     volumes: []
