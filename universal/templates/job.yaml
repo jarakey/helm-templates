@@ -16,7 +16,23 @@ metadata:
     {{- range $key, $val := .labels }}
     {{ $key }}: {{ $val }}
     {{- end }}
-  {{- if .annotations }}
+  {{- if .hook }}
+  {{- if .hook.enabled }}
+  annotations:
+    "helm.sh/hook": {{ default "pre-install,pre-upgrade" .hook.events | quote }}
+    "helm.sh/hook-delete-policy": {{ default "before-hook-creation,hook-succeeded" .hook.deletePolicy | quote }}
+    {{- if .annotations }}
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+    {{- end }}
+  {{- else if .annotations }}
+  annotations:
+    {{- range $key, $val := .annotations }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+  {{- end }}
+  {{- else if .annotations }}
   annotations:
     {{- range $key, $val := .annotations }}
     {{ $key }}: {{ $val }}
@@ -101,6 +117,22 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .podSecurityContext }}
+      podSecurityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- end }}
+{{- end }}
+
       {{- with .securityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
