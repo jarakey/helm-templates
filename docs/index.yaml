@@ -1,0 +1,31 @@
+apiVersion: v1
+entries:
+  universal:
+  - annotations:
+      category: Infrastructure
+      licenses: MIT
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-08-11T03:57:16.91532264Z"
+    description: A universal Helm chart for Kubernetes applications with feature-flag
+      driven capabilities
+    digest: 2cbf485e1d91fe16519226eb79f9a93dcb436f5ad7c321e981f59ad4a5bc5b2e
+    home: https://github.com/jarakey/helm-templates
+    icon: https://helm.sh/img/helm.svg
+    keywords:
+    - kubernetes
+    - helm
+    - universal
+    - feature-flags
+    - multi-deployment
+    maintainers:
+    - email: t@jarakey.com
+      name: JARAKEY
+    name: universal
+    sources:
+    - https://github.com/jarakey/helm-templates
+    type: application
+    urls:
+    - https://jarakey.github.io/helm-templates/universal-1.0.8.tgz
+    version: 1.0.8
+generated: "2025-08-11T03:57:16.909690006Z"
