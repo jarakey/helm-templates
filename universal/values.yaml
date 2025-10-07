@@ -31,7 +31,7 @@ deployments: []
 #     healthCheck:
 #       enabled: true
 #       path: "/health"
-#       initialDelaySeconds: 30
+#       initialDelaySeconds: 5
 #       periodSeconds: 10
 #     # Service is created automatically for deployments with ports
 #     # To disable service creation, set: service.enabled: false

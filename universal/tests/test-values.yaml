@@ -167,8 +167,7 @@ ingress:
     className: "nginx"
     serviceName: "web-server-service"
     servicePort: 80
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
+
     hosts:
       - host: "test.example.com"
         serviceName: "web-server-service"
